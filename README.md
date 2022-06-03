@@ -8,4 +8,4 @@ this tiny script sets up an npc that does this on the police behalf.
 
 set the coords in the client lua whereever you want the npc (city hall, police station etc)
 
-remember to install the dependency
+remember to install the dependency https://github.com/Mojito-Fivem/mojito_dialogue <3
