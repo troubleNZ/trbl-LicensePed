@@ -1,6 +1,6 @@
 -- simple config
 local model = `cs_carbuyer`
-local pedlocation = vector4(225.24, -428.48, 47.02, 326.35) -- set up for https://forum.cfx.re/t/jay17-courthouse-early-access/1350775
+local pedlocation = vector4(250.72, -1076.23, 29.29, 164.33) -- set up for https://github.com/leuxum1/courthouse-fivem
 local pedloadrange = 20     --meters
 
 --required stuff
