@@ -3,6 +3,8 @@ local Config = {}
 
 Config.pedmodel = `cs_carbuyer`
 Config.pedlocation = vector4(250.72, -1076.23, 29.29, 164.33) -- set up for https://github.com/leuxum1/courthouse-fivem
+Config.pedlocationTarget = vector4(250.12, -1075.98, 28.84, 180.47)      -- optional location for sitting down
+
 Config.pedloadrange = 20     --meters
 Config.PedMethod = "qb-target"  -- qb-target or mojito_dialogue // remember to change the fxmanifest dependency  'mojito_dialogue' or 'qb-target'
 
@@ -21,14 +23,21 @@ AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
     TriggerEvent("trbl-license:client:loadNPC")
 end)
 
---RegisterNetEvent('QBCore:Client:OnPlayerUnload')
+RegisterNetEvent('QBCore:Client:OnPlayerUnload')
 AddEventHandler('QBCore:Client:OnPlayerUnload', function()
     isLoggedIn = false
+    if Config.PedMethod == "qb-target" then
+        exports['qb-target']:RemoveSpawnedPed('licenseped')
+    end
 end)
 
 -- This is to make sure you can restart the resource manually without having to log-out.
 AddEventHandler('onResourceStart', function(resource)
     
+    if Config.PedMethod == "qb-target" then
+        exports['qb-target']:RemoveSpawnedPed('licenseped')
+    end
+
 	if resource == GetCurrentResourceName() then
 		Wait(200)
 		
@@ -38,13 +47,14 @@ AddEventHandler('onResourceStart', function(resource)
 	end
 end)
 
--- spawns the ped with the dependency https://github.com/Mojito-Fivem/mojito_dialogue
+-- spawns the ped with either dependency https://github.com/Mojito-Fivem/mojito_dialogue or qb-target
 AddEventHandler("trbl-license:client:loadNPC", function()
     
     if Config.PedMethod == "qb-target" then
         exports['qb-target']:SpawnPed({
+            name = 'licenseped',
             model = Config.pedmodel,
-            coords = Config.pedlocation,
+            coords = Config.pedlocationTarget,
             minusOne = true,
             freeze = true,
             invincible = true,
@@ -63,7 +73,7 @@ AddEventHandler("trbl-license:client:loadNPC", function()
                     
                     }
                 },
-                distance = 2.0,
+                distance = 2.5,
             },
         })
 
@@ -75,7 +85,7 @@ AddEventHandler("trbl-license:client:loadNPC", function()
             items = {
                 {text = "Driver", value="driver"},
                 {text = "Weapon", value="weapon"},
-                -- you could add truck / motobike here too if you have that set up.
+                -- you could add pilot / truck / motobike here too if you have that set up.
                 {text = "Cancel", value="no"}
             }
         }, function(selection)
@@ -91,7 +101,7 @@ AddEventHandler("trbl-license:client:loadNPC", function()
     end
 end)
 
-
+-- show menu if using qb-target
 RegisterNetEvent('trbl-license:client:ShowMenu', function() 
     exports['qb-menu']:openMenu({
         {
@@ -103,16 +113,24 @@ RegisterNetEvent('trbl-license:client:ShowMenu', function()
             txt = "$50",
             params = {
                 event = "trbl-license:client:licensereferral",
-                args = "driver"
+                args = 1
             }
-        },
-        
+        },        
         {
             header = "Weapon License", 
             txt = "$50",
             params = {
-                event = "trbl-license:client:licensereferral",  -- TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", selection)
-                args = "weapon"
+                event = "trbl-license:client:licensereferral", 
+                args = 2
+            }
+        },
+        {
+            header = "Pilot License", 
+            disabled = true,
+            txt = "$5000",
+            params = {
+                event = "trbl-license:client:licensereferral", 
+                args = 3
             }
         },
         {
@@ -125,10 +143,10 @@ RegisterNetEvent('trbl-license:client:ShowMenu', function()
     })
 end)
 
-RegisterNetEvent('trbl-license:client:licensereferral', function(selection) 
+RegisterNetEvent('trbl-license:client:licensereferral', function(selection)    
     if selection == 1 then
         TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", "driver")
     elseif selection == 2 then
         TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", "weapon")
-    else
-end
+    end
+end)
