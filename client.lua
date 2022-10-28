@@ -1,7 +1,10 @@
 -- simple config
-local model = `cs_carbuyer`
-local pedlocation = vector4(250.72, -1076.23, 29.29, 164.33) -- set up for https://github.com/leuxum1/courthouse-fivem
-local pedloadrange = 20     --meters
+local Config = {}
+
+Config.pedmodel = `cs_carbuyer`
+Config.pedlocation = vector4(250.72, -1076.23, 29.29, 164.33) -- set up for https://github.com/leuxum1/courthouse-fivem
+Config.pedloadrange = 20     --meters
+Config.PedMethod = "qb-target"  -- qb-target or mojito_dialogue // remember to change the fxmanifest dependency  'mojito_dialogue' or 'qb-target'
 
 --required stuff
 local PlayerData = {}
@@ -38,19 +41,94 @@ end)
 -- spawns the ped with the dependency https://github.com/Mojito-Fivem/mojito_dialogue
 AddEventHandler("trbl-license:client:loadNPC", function()
     
-    exports['mojito_dialogue']:NewDialogueCallback(model, vector4(pedlocation.x,pedlocation.y,pedlocation.z,pedlocation.w), pedloadrange, {
-        title = "What license do you require?",
-        items = {
-            {text = "Driver", value="driver"},
-            {text = "Weapon", value="weapon"},
-            -- you could add truck / motobike here too if you have that set up.
-            {text = "Cancel", value="no"}
-        }
-    }, function(selection)
-        if selection == "driver" or selection == "weapon" then
-            TriggerServerEvent("pedlicense:server:GivePedWeaponLicense", selection)
-        else 
-            TriggerEvent('QBCore:Notify', "Exited", "error")
-        end
-    end)
+    if Config.PedMethod == "qb-target" then
+        exports['qb-target']:SpawnPed({
+            model = Config.pedmodel,
+            coords = Config.pedlocation,
+            minusOne = true,
+            freeze = true,
+            invincible = true,
+            blockevents = true,
+            animDict = 'abigail_mcs_1_concat-0',
+            anim = 'csb_abigail_dual-0',
+            flag = 1,
+            scenario = 'PROP_HUMAN_SEAT_COMPUTER',
+            target = {
+                options = {
+                    {
+                        type = "client",
+                        event = "trbl-license:client:ShowMenu",
+                        icon = "fas fa-money-check",
+                        label = "Renew My License"
+                    
+                    }
+                },
+                distance = 2.0,
+            },
+        })
+
+
+    elseif Config.PedMethod == "mojito_dialogue" then
+
+        exports['mojito_dialogue']:NewDialogueCallback(Config.pedmodel, vector4(Config.pedlocation.x,Config.pedlocation.y,Config.pedlocation.z,Config.pedlocation.w), Config.pedloadrange, {
+            title = "What license do you require?",
+            items = {
+                {text = "Driver", value="driver"},
+                {text = "Weapon", value="weapon"},
+                -- you could add truck / motobike here too if you have that set up.
+                {text = "Cancel", value="no"}
+            }
+        }, function(selection)
+            if selection == "driver" or selection == "weapon" then
+                TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", selection)
+            else 
+                TriggerEvent('QBCore:Notify', "Exited", "error")
+            end
+        end)
+
+    else
+        print("licenseped not set up correctly")
+    end
 end)
+
+
+RegisterNetEvent('trbl-license:client:ShowMenu', function() 
+    exports['qb-menu']:openMenu({
+        {
+            header = "What License do you require?",
+            isMenuHeader = true,
+        },
+        {
+            header = "Drivers License", 
+            txt = "$50",
+            params = {
+                event = "trbl-license:client:licensereferral",
+                args = "driver"
+            }
+        },
+        
+        {
+            header = "Weapon License", 
+            txt = "$50",
+            params = {
+                event = "trbl-license:client:licensereferral",  -- TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", selection)
+                args = "weapon"
+            }
+        },
+        {
+            header = "Close",
+            txt = "",
+            params = {
+                event = "qb-menu:closeMenu"
+            }
+        },
+    })
+end)
+
+RegisterNetEvent('trbl-license:client:licensereferral', function(selection) 
+    if selection == 1 then
+        TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", "driver")
+    elseif selection == 2 then
+        TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", "weapon")
+    else
+end

@@ -1,7 +1,7 @@
 
 local QBCore = exports['qb-core']:GetCoreObject()
-RegisterServerEvent('pedlicense:server:GivePedWeaponLicense')
-AddEventHandler('pedlicense:server:GivePedWeaponLicense', function(selection)
+--RegisterServerEvent('pedlicense:server:GivePedLicenseMeta')
+RegisterServerEvent('pedlicense:server:GivePedLicenseMeta', function(selection)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     
