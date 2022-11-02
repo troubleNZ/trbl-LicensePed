@@ -1,18 +1,6 @@
--- simple config
-local Config = {}
-
-Config.pedmodel = `cs_carbuyer`
-Config.pedlocation = vector4(250.72, -1076.23, 29.29, 164.33) -- set up for https://github.com/leuxum1/courthouse-fivem
-Config.pedlocationTarget = vector4(250.12, -1075.98, 28.84, 180.47)      -- optional location for sitting down
-
-Config.pedloadrange = 20     --meters
-Config.PedMethod = "qb-target"  -- qb-target or mojito_dialogue // remember to change the fxmanifest dependency  'mojito_dialogue' or 'qb-target'
-
---required stuff
 local PlayerData = {}
 QBCore = exports['qb-core']:GetCoreObject()
 
---RegisterNetEvent('QBCore:Client:OnPlayerLoaded')
 AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
     
     Wait(500)
@@ -31,7 +19,6 @@ AddEventHandler('QBCore:Client:OnPlayerUnload', function()
     end
 end)
 
--- This is to make sure you can restart the resource manually without having to log-out.
 AddEventHandler('onResourceStart', function(resource)
     
     if Config.PedMethod == "qb-target" then
@@ -69,17 +56,19 @@ AddEventHandler("trbl-license:client:loadNPC", function()
                         type = "client",
                         event = "trbl-license:client:ShowMenu",
                         icon = "fas fa-money-check",
-                        label = "Renew My License"
-                    
-                    }
+                        label = "Apply for License"
+                    },
+                    {
+                        type = "client",
+                        event = "trbl-license:client:PurchaseMenu",
+                        icon = "fas fa-money-check",
+                        label = "Recover Lost Documentation"
+                    }                    
                 },
-                distance = 2.5,
+                distance = Config.distance,
             },
         })
-
-
     elseif Config.PedMethod == "mojito_dialogue" then
-
         exports['mojito_dialogue']:NewDialogueCallback(Config.pedmodel, vector4(Config.pedlocation.x,Config.pedlocation.y,Config.pedlocation.z,Config.pedlocation.w), Config.pedloadrange, {
             title = "What license do you require?",
             items = {
@@ -90,7 +79,7 @@ AddEventHandler("trbl-license:client:loadNPC", function()
             }
         }, function(selection)
             if selection == "driver" or selection == "weapon" then
-                TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", selection)
+                TriggerServerEvent("trbl-license:server:GivePedLicenseMeta", selection)
             else 
                 TriggerEvent('QBCore:Notify', "Exited", "error")
             end
@@ -103,50 +92,62 @@ end)
 
 -- show menu if using qb-target
 RegisterNetEvent('trbl-license:client:ShowMenu', function() 
-    exports['qb-menu']:openMenu({
-        {
-            header = "What License do you require?",
+    local mainMenu = {{
+            header = "What License are you applying for?",
             isMenuHeader = true,
-        },
-        {
-            header = "Drivers License", 
-            txt = "$50",
+        }
+    }
+    for k, v in pairs(Config.Purchasables) do
+        mainMenu[#mainMenu + 1] = {
+            header = v.label,
+            icon = "fa-solid fa-circle",
             params = {
-                event = "trbl-license:client:licensereferral",
-                args = 1
+                event = 'trbl-license:client:licensereferral',
+                args = v.item
             }
-        },        
-        {
-            header = "Weapon License", 
-            txt = "$50",
-            params = {
-                event = "trbl-license:client:licensereferral", 
-                args = 2
-            }
-        },
-        {
-            header = "Pilot License", 
-            disabled = true,
-            txt = "$5000",
-            params = {
-                event = "trbl-license:client:licensereferral", 
-                args = 3
-            }
-        },
-        {
-            header = "Close",
-            txt = "",
-            params = {
-                event = "qb-menu:closeMenu"
-            }
-        },
-    })
+        }
+    end
+    exports['qb-menu']:openMenu(mainMenu)
 end)
 
+
+-- purchase the item
+
+RegisterNetEvent('trbl-license:client:PurchaseMenu', function()
+    local purchaseMenu = {        
+        {
+            header = "Print a new license?",
+            isMenuHeader = true,
+        },
+    }
+	for k, v in pairs(Config.Purchasables) do
+        purchaseMenu[#purchaseMenu + 1] = {
+            header = v.label,
+            icon = "fa-solid fa-circle",
+            params = {
+                event = 'trbl-license:client:requestId',
+                args = k
+            }
+        }
+    end
+    exports['qb-menu']:openMenu(purchaseMenu)
+end)
+
+-- set meta
 RegisterNetEvent('trbl-license:client:licensereferral', function(selection)    
-    if selection == 1 then
-        TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", "driver")
-    elseif selection == 2 then
-        TriggerServerEvent("pedlicense:server:GivePedLicenseMeta", "weapon")
+    TriggerServerEvent("trbl-license:server:GivePedLicenseMeta", selection)
+end)
+
+RegisterNetEvent('trbl-license:client:requestId', function(id)
+    local inRange = false
+    local license = Config.Purchasables[id]
+    local pcoords = GetEntityCoords(PlayerPedId())
+    local dist = #(pcoords - vector3(Config.pedlocationTarget.x,Config.pedlocationTarget.y,Config.pedlocationTarget.z))
+    if dist <= Config.distance then inRange = true end
+    if inRange and license and Config.Purchasables[id].cost == license.cost then
+        TriggerServerEvent('trbl-license:server:requestId', license.item)
+        QBCore.Functions.Notify(('You have received your %s for $%s'):format(license.label, license.cost), 'success', 3500)
+    else
+        QBCore.Functions.Notify('Too far from the issuer', 'error')
     end
 end)
