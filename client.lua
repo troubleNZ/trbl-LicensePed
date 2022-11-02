@@ -100,7 +100,7 @@ RegisterNetEvent('trbl-license:client:ShowMenu', function()
     for k, v in pairs(Config.Purchasables) do
         mainMenu[#mainMenu + 1] = {
             header = v.label,
-            icon = "fa-solid fa-circle",
+            icon = v.icon,
             params = {
                 event = 'trbl-license:client:licensereferral',
                 args = v.item
@@ -123,7 +123,7 @@ RegisterNetEvent('trbl-license:client:PurchaseMenu', function()
 	for k, v in pairs(Config.Purchasables) do
         purchaseMenu[#purchaseMenu + 1] = {
             header = v.label,
-            icon = "fa-solid fa-circle",
+            icon = v.icon,
             params = {
                 event = 'trbl-license:client:requestId',
                 args = k
