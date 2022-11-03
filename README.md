@@ -1,3 +1,4 @@
+![Contributors](https://img.shields.io/github/contributors/troublenz/trbl-LicensePed?color=aqua&style=plastic)![Commits](https://img.shields.io/github/last-commit/troublenz/trbl-LicensePed?style=plastic)![License](https://img.shields.io/github/license/troublenz/trbl-LicensePed?color=aqua&style=plastic)![Size](https://img.shields.io/github/repo-size/troublenz/trbl-LicensePed?color=aqua&style=plastic)
 # trbl-LicensePed
 Weapon License issuing NPC for qbcore
 
