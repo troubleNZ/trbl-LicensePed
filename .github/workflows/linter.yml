@@ -1,0 +1,81 @@
+#################################
+#################################
+## Super Linter GitHub Actions ##
+#################################
+#################################
+name: Lint Code Base
+
+#
+# Documentation:
+# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions
+#
+
+#############################
+# Start the job on all push #
+#############################
+
+
+on:
+  push:
+    branches-ignore: [master, main]
+    # Remove the line above to run when pushing to master
+  pull_request:
+    branches: [master, main]
+
+#####################################################################
+# The action requires write permission on the checks.               #
+# If the GA token is read-only (this is a repository configuration) #
+# please enable write permission via:                               #
+#####################################################################
+permissions:
+  contents: read
+  checks: write
+  id-token: write
+###############
+# Set the Job #
+###############
+jobs:
+  build:
+    # Name the Job
+    name: Lint Code Base
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          # Full git history is needed to get a proper
+          # list of changed files within `super-linter`
+          fetch-depth: 0
+
+      ################################
+      # Run Linter against code base #
+      ################################
+      - name: Lint Code Base
+        uses: iLLeniumStudios/fivem-lua-lint-action@v2
+        with:
+          extra_libs: mysql+polyzone+qblocales
+#          capture: "junit.xml"
+#          args: "-t --formatter JUnit"
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          # Change to 'master' if your main branch differs
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      ################################
+      # Create Report as XML output  #
+      ################################
+#      - name: Generate Lint Report
+#        if: always()
+#        uses: mikepenz/action-junit-report@v3.7.1
+#        with:
+#          report_paths: "**/junit.xml"
+#          check_name: Linting Report
+#          fail_on_failure: false
